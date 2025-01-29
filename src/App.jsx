@@ -62,12 +62,12 @@ const App = () => {
 
       console.log("📡 Fetching tasks from contract...");
 
-      const myTasks = await contract.getMyTasks(); // Ensure method matches smart contract
+      const myTasks = await contract.getMyTasks(); 
 
       console.log("📋 Raw tasks from blockchain:", myTasks);
 
       const formattedTasks = myTasks
-        .filter(task => !task.isDeleted) // Ensure only active tasks are displayed
+        .filter(task => !task.isDeleted) 
         .map(task => ({
           id: task.id.toString(),
           taskTitle: task.taskTitle,
@@ -107,7 +107,7 @@ const App = () => {
       setTaskTitle("");
       setTaskText("");
 
-      setUpdateTrigger(prev => !prev); // Force UI update
+      setUpdateTrigger(prev => !prev); 
     } catch (error) {
       console.error("🚨 Error adding task:", error);
       showError("Failed to add task.");
@@ -125,7 +125,7 @@ const App = () => {
       await tx.wait();
 
       showSuccess("Task deleted successfully!");
-      setUpdateTrigger(prev => !prev); // Force UI update
+      setUpdateTrigger(prev => !prev); 
     } catch (error) {
       showError("Failed to delete task.");
     }
