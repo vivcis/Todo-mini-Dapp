@@ -13,6 +13,7 @@ const App = () => {
   const [taskTitle, setTaskTitle] = useState("");
   const [taskText, setTaskText] = useState("");
   const [updateTrigger, setUpdateTrigger] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); 
 
   useEffect(() => {
     checkWalletConnection();
@@ -55,31 +56,41 @@ const App = () => {
 
   async function fetchTasks() {
     if (!window.ethereum || !account) return;
+  
+    setIsLoading(true);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const contract = getContract(provider);
+      const signer = await provider.getSigner();
+      const contract = getContract(signer); 
 
       console.log("📡 Fetching tasks from contract...");
 
-      const myTasks = await contract.getMyTasks(); 
-
+      const myTasks = await contract.getMyTask();
       console.log("📋 Raw tasks from blockchain:", myTasks);
 
       const formattedTasks = myTasks
-        .filter(task => !task.isDeleted) 
+        .filter(task => task && task.taskTitle && task.taskText && !task.isDeleted)
         .map(task => ({
-          id: task.id.toString(),
+          id: Number(task.id.toString()),
           taskTitle: task.taskTitle,
           taskText: task.taskText,
         }));
 
       console.log("✅ Tasks formatted:", formattedTasks);
-
       setTasks([...formattedTasks]);
+
+      if (formattedTasks.length === 0) {
+        toast.info("ℹ️ No tasks found.");
+      } else {
+        toast.success(`Loaded ${formattedTasks.length} tasks`);
+      }
+
     } catch (error) {
       console.error("🚨 Error fetching tasks:", error);
       showError("Failed to fetch tasks.");
+    } finally {
+      setIsLoading(false); 
     }
   }
 
@@ -158,7 +169,7 @@ const App = () => {
 
   return (
     <div className="app-container">
-      <h1 className="app-title">CeCe Task Manager DApp</h1>
+      <h1 className="app-title">CeCe Task Manager dApp</h1>
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
 
       <p className="wallet-info">
@@ -191,7 +202,10 @@ const App = () => {
       </form>
 
       <h2 className="task-heading">My Tasks</h2>
-      {tasks.length === 0 ? (
+
+      {isLoading ? ( 
+        <p className="loading-text">⏳ Loading tasks...</p>
+      ) : tasks.length === 0 ? (
         <p className="no-tasks">No tasks found. Add a task to get started!</p>
       ) : (
         <ul className="task-list">
